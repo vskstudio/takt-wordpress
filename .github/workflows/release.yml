@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out takt-core-php (sibling path dependency)
+        uses: actions/checkout@v4
+        with:
+          repository: vskstudio/takt-core-php
+          token: ${{ secrets.CORE_PHP_TOKEN }}
+          path: _core-php
+      - run: mv _core-php ../takt-core-php
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Build the release ZIP
+        run: bin/build.sh
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/takt-analytics.zip
+          generate_release_notes: true

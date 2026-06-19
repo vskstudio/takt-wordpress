@@ -6,7 +6,7 @@
     "env:start": "wp-env start",
     "env:stop": "wp-env stop",
     "env:clean": "wp-env destroy",
-    "e2e": "wp-env start && node e2e/configure.mjs && playwright test",
+    "e2e": "wp-env start && wp-env run cli wp eval-file wp-content/plugins/takt-wordpress/e2e/setup-wp.php && playwright test",
     "e2e:run": "playwright test"
   },
   "devDependencies": {

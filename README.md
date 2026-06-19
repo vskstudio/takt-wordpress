@@ -1,0 +1,91 @@
+# Takt Analytics for WordPress
+
+The official WordPress plugin for [Takt](https://github.com/vskstudio/takt-wordpress), privacy-first web analytics. It injects the Takt browser snippet into your site and — when WooCommerce is active — reports completed orders as server-to-server purchase events with revenue.
+
+- **Snippet injection** into `wp_head` (inline, CDN or self-hosted asset).
+- **Autocapture** for outbound links, file downloads, tagged events and 404s.
+- **WooCommerce purchases** sent server-to-server, so revenue is tracked even when an order completes off-session (IPN, admin, cron).
+- **No bundled HTTP stack** — server-to-server requests go through WordPress' own `wp_remote_post`.
+- **Dependency-isolated** — all Composer dependencies are namespaced under `Takt\WP\Vendor\`, so the plugin never clashes with another plugin's PSR-7/HTTP libraries.
+
+## Requirements
+
+- WordPress 6.0+
+- PHP 8.1+
+- WooCommerce (optional, for purchase tracking)
+- A Takt endpoint and API key
+
+## Installation
+
+1. Download `takt-analytics.zip` from the [latest release](https://github.com/vskstudio/takt-wordpress/releases).
+2. In **WP Admin → Plugins → Add New → Upload Plugin**, upload the ZIP and activate it.
+3. Open **Settings → Takt Analytics** and configure your domain and endpoint.
+
+Or via WP-CLI:
+
+```bash
+wp plugin install takt-analytics.zip --activate
+```
+
+The release ZIP is self-contained: it bundles `takt-core-php` and its PSR-7 dependencies (scoped), so no `composer install` is needed on the server.
+
+## Configuration
+
+**Settings → Takt Analytics**
+
+| Setting | Description |
+| --- | --- |
+| Domain | The site identifier sent with every event (e.g. `example.com`). |
+| Mode | `inline` (snippet embedded), `cdn` or `asset` (self-hosted). |
+| Outbound / Downloads / Tagged / 404 | Autocapture toggles for the browser tracker. |
+| Exclude localhost | Skip tracking on local hostnames (on for production). |
+| File extensions | Which extensions count as downloads. |
+| Script origin | Base URL for `cdn`/`asset` modes. |
+| WooCommerce | Send purchase events on order completion. |
+| Trigger status | Order status that fires the purchase (`completed` or `processing`). |
+| API endpoint | Your Takt ingest endpoint (server-to-server). |
+| API key | Bearer token for server-to-server events (write-only field). |
+
+### API key via `wp-config.php`
+
+For environments where secrets must not live in the database, define the key as a constant. It takes precedence over the stored value and the admin field becomes read-only:
+
+```php
+define('TAKT_API_KEY', 'your-key');
+```
+
+### Privacy
+
+WooCommerce purchase events are sent from your server to your Takt endpoint and include the customer's IP address and user agent for attribution. They are forwarded, never logged by the plugin. The browser tracker honours `Do Not Track` and a `takt_ignore` localStorage opt-out.
+
+## Development
+
+```bash
+composer install
+composer check        # php-cs-fixer + phpstan + phpunit
+composer test         # unit tests only
+```
+
+### Building the release ZIP
+
+```bash
+bin/build.sh          # → dist/takt-analytics.zip
+```
+
+This installs production dependencies, scopes them under `Takt\WP\Vendor\` with [PHP-Scoper](https://github.com/humbug/php-scoper), regenerates the autoloader, smoke-tests it and packages the ZIP.
+
+### End-to-end tests
+
+The E2E suite spins up a real WordPress + WooCommerce via [`wp-env`](https://www.npmjs.com/package/@wordpress/env), runs [Playwright](https://playwright.dev) against it and asserts the snippet, the pageview beacon and a WooCommerce purchase event (captured by a mock ingest server):
+
+```bash
+npm install
+npx playwright install chromium
+npm run env:start
+npx wp-env run cli wp eval-file wp-content/plugins/takt-wordpress/e2e/setup-wp.php
+npm run e2e
+```
+
+## License
+
+MIT
