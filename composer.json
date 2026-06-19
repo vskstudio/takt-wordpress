@@ -25,7 +25,10 @@
   "repositories": [
     {
       "type": "path",
-      "url": "../takt-core-php"
+      "url": "../takt-core-php",
+      "options": {
+        "symlink": false
+      }
     }
   ],
   "require": {
