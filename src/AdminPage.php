@@ -75,6 +75,7 @@ final class AdminPage
             'inline' => 'Inline (anti-adblock)',
             'cdn' => 'CDN (jsDelivr)',
             'asset' => 'Fichier hébergé',
+            'sdk' => 'SDK (module ES)',
         ]);
         $this->textRow('script_origin', 'Origine du script', $s['script_origin'], 'https://cdn.exemple.com');
         $this->checkboxRow('exclude_localhost', 'Exclure localhost', $s['exclude_localhost']);
@@ -84,6 +85,13 @@ final class AdminPage
         $this->checkboxRow('tagged', 'Événements balisés (HTML)', $s['tagged']);
         $this->checkboxRow('not_found', 'Pages 404', $s['not_found']);
         $this->textRow('file_extensions', 'Extensions téléchargeables', implode(', ', $s['file_extensions']), 'pdf, zip, docx');
+
+        $rate = $s['sample_rate'] === null ? '' : (string) $s['sample_rate'];
+        $this->textRow('sample_rate', 'Taux d\'échantillonnage', $rate, '0.5');
+        $this->checkboxRow('track_query', 'Conserver la query string', $s['track_query']);
+        $this->textRow('query_params', 'Paramètres de requête conservés', implode(', ', $s['query_params']), 'utm_source, utm_medium');
+        $this->checkboxRow('ignore_dnt', 'Ignorer Do-Not-Track', $s['ignore_dnt']);
+        $this->checkboxRow('disable_tracking', 'Suspendre le suivi', $s['disable_tracking']);
 
         $this->checkboxRow('woocommerce', 'Suivi WooCommerce (achats)', $s['woocommerce']);
         $this->selectRow('wc_trigger_status', 'Déclencheur de la commande', $s['wc_trigger_status'], [

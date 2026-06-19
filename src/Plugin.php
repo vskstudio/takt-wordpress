@@ -26,6 +26,12 @@ final class Plugin
         if (\defined('TAKT_API_KEY')) {
             $settings['api_key'] = (string) \constant('TAKT_API_KEY');
         }
+        // scrubUrl is raw JS injected verbatim into the page, so it is dev-only:
+        // it lives in wp-config.php (TAKT_SCRUB_URL), never in the DB or the admin
+        // UI, and only takes effect in sdk mode (see Settings::toOptions).
+        if (\defined('TAKT_SCRUB_URL')) {
+            $settings['scrub_url'] = (string) \constant('TAKT_SCRUB_URL');
+        }
 
         (new self($settings))->register();
     }

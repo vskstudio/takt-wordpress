@@ -28,8 +28,39 @@ final class SettingsTest extends TestCase
     {
         $this->assertSame('cdn', Settings::sanitize(['mode' => 'cdn'])['mode']);
         $this->assertSame('asset', Settings::sanitize(['mode' => 'asset'])['mode']);
+        $this->assertSame('sdk', Settings::sanitize(['mode' => 'sdk'])['mode']);
         $this->assertSame('inline', Settings::sanitize(['mode' => 'nonsense'])['mode']);
         $this->assertSame('inline', Settings::sanitize([])['mode']);
+    }
+
+    public function test_sanitize_clamps_sample_rate(): void
+    {
+        $this->assertSame(0.5, Settings::sanitize(['sample_rate' => '0.5'])['sample_rate']);
+        $this->assertSame(1.0, Settings::sanitize(['sample_rate' => '1'])['sample_rate']);
+        $this->assertNull(Settings::sanitize(['sample_rate' => '0'])['sample_rate']);
+        $this->assertNull(Settings::sanitize(['sample_rate' => '1.5'])['sample_rate']);
+        $this->assertNull(Settings::sanitize(['sample_rate' => 'abc'])['sample_rate']);
+        $this->assertNull(Settings::sanitize([])['sample_rate']);
+    }
+
+    public function test_sanitize_parses_query_params_allowlist(): void
+    {
+        $out = Settings::sanitize(['query_params' => 'utm_source, utm_medium , bad token,,']);
+        $this->assertSame(['utm_source', 'utm_medium'], $out['query_params']);
+        $this->assertSame([], Settings::sanitize([])['query_params']);
+    }
+
+    public function test_sanitize_casts_advanced_boolean_flags(): void
+    {
+        $on = Settings::sanitize(['track_query' => '1', 'ignore_dnt' => '1', 'disable_tracking' => '1']);
+        $this->assertTrue($on['track_query']);
+        $this->assertTrue($on['ignore_dnt']);
+        $this->assertTrue($on['disable_tracking']);
+
+        $off = Settings::sanitize([]);
+        $this->assertFalse($off['track_query']);
+        $this->assertFalse($off['ignore_dnt']);
+        $this->assertFalse($off['disable_tracking']);
     }
 
     public function test_sanitize_casts_boolean_flags(): void
@@ -121,5 +152,47 @@ final class SettingsTest extends TestCase
         $this->assertSame(['pdf', 'zip'], $opts->fileExtensions);
         $this->assertSame('https://cdn.example.com', $opts->scriptOrigin);
         $this->assertSame('nonce-123', $opts->nonce);
+    }
+
+    public function test_to_options_maps_advanced_options(): void
+    {
+        $opts = Settings::toOptions([
+            'domain' => 'example.com',
+            'mode' => 'cdn',
+            'sample_rate' => 0.5,
+            'track_query' => true,
+            'query_params' => ['utm_source'],
+            'ignore_dnt' => true,
+            'disable_tracking' => true,
+        ]);
+
+        $this->assertSame(0.5, $opts->sampleRate);
+        $this->assertTrue($opts->trackQuery);
+        $this->assertSame(['utm_source'], $opts->queryParams);
+        $this->assertFalse($opts->respectDnt);
+        $this->assertFalse($opts->enabled);
+    }
+
+    public function test_to_options_defaults_leave_advanced_options_unset(): void
+    {
+        $opts = Settings::toOptions(['domain' => 'example.com', 'mode' => 'cdn']);
+
+        $this->assertNull($opts->sampleRate);
+        $this->assertNull($opts->trackQuery);
+        $this->assertSame([], $opts->queryParams);
+        $this->assertNull($opts->respectDnt);
+        $this->assertNull($opts->enabled);
+        $this->assertNull($opts->scrubUrl);
+    }
+
+    public function test_to_options_passes_scrub_url_only_in_sdk_mode(): void
+    {
+        $sdk = Settings::toOptions(['domain' => 'example.com', 'mode' => 'sdk', 'scrub_url' => '(u)=>u']);
+        $this->assertSame('(u)=>u', $sdk->scrubUrl);
+        $this->assertSame(Mode::Sdk, $sdk->mode);
+
+        // Outside sdk mode the JS function is dropped (core-php would otherwise throw).
+        $cdn = Settings::toOptions(['domain' => 'example.com', 'mode' => 'cdn', 'scrub_url' => '(u)=>u']);
+        $this->assertNull($cdn->scrubUrl);
     }
 }
