@@ -4,3 +4,8 @@
 /composer.lock
 .phpunit.result.cache
 .php-cs-fixer.cache
+/node_modules/
+/package-lock.json
+/test-results/
+/playwright-report/
+/e2e/.runtime.json

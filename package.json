@@ -1,0 +1,16 @@
+{
+  "name": "takt-wordpress-e2e",
+  "private": true,
+  "description": "End-to-end harness for the Takt WordPress plugin (wp-env + Playwright + mocked ingest).",
+  "scripts": {
+    "env:start": "wp-env start",
+    "env:stop": "wp-env stop",
+    "env:clean": "wp-env destroy",
+    "e2e": "wp-env start && node e2e/configure.mjs && playwright test",
+    "e2e:run": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@wordpress/env": "^10.10.0"
+  }
+}
