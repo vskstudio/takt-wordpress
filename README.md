@@ -2,7 +2,7 @@
 
 The official WordPress plugin for [Takt](https://github.com/vskstudio/takt-wordpress), privacy-first web analytics. It injects the Takt browser snippet into your site and — when WooCommerce is active — reports completed orders as server-to-server purchase events with revenue.
 
-- **Snippet injection** into `wp_head` (inline, CDN or self-hosted asset).
+- **Snippet injection** into `wp_head` (inline, CDN, self-hosted asset or ES-module SDK).
 - **Autocapture** for outbound links, file downloads, tagged events and 404s.
 - **WooCommerce purchases** sent server-to-server, so revenue is tracked even when an order completes off-session (IPN, admin, cron).
 - **No bundled HTTP stack** — server-to-server requests go through WordPress' own `wp_remote_post`.

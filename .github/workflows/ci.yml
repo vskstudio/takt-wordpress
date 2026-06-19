@@ -5,7 +5,7 @@ on:
     branches: [main]
   pull_request:
 
-# takt-core-php is resolved from Packagist (vskstudio/takt-core-php ^0.2).
+# takt-core-php is resolved from Packagist (vskstudio/takt-core-php ^0.3).
 jobs:
   lint-test:
     runs-on: ubuntu-latest
