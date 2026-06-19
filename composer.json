@@ -22,18 +22,9 @@
     "issues": "https://github.com/vskstudio/takt-wordpress/issues",
     "source": "https://github.com/vskstudio/takt-wordpress"
   },
-  "repositories": [
-    {
-      "type": "path",
-      "url": "../takt-core-php",
-      "options": {
-        "symlink": false
-      }
-    }
-  ],
   "require": {
     "php": ">=8.1",
-    "vskstudio/takt-core-php": "*",
+    "vskstudio/takt-core-php": "^0.2",
     "nyholm/psr7": "^1.8"
   },
   "require-dev": {
@@ -72,6 +63,5 @@
       "@test"
     ]
   },
-  "minimum-stability": "dev",
-  "prefer-stable": true
+  "minimum-stability": "stable"
 }

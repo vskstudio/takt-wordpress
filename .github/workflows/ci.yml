@@ -5,9 +5,7 @@ on:
     branches: [main]
   pull_request:
 
-# takt-core-php is consumed as a sibling path dependency (../takt-core-php).
-# CI checks it out next to this repo. Once it is published on Packagist with the
-# required version, the path repository and these steps can be dropped.
+# takt-core-php is resolved from Packagist (vskstudio/takt-core-php ^0.2).
 jobs:
   lint-test:
     runs-on: ubuntu-latest
@@ -17,14 +15,6 @@ jobs:
         php: ['8.1', '8.2', '8.3']
     steps:
       - uses: actions/checkout@v4
-
-      - name: Check out takt-core-php (sibling path dependency)
-        uses: actions/checkout@v4
-        with:
-          repository: vskstudio/takt-core-php
-          token: ${{ secrets.CORE_PHP_TOKEN }}
-          path: _core-php
-      - run: mv _core-php ../takt-core-php
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -41,14 +31,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Check out takt-core-php (sibling path dependency)
-        uses: actions/checkout@v4
-        with:
-          repository: vskstudio/takt-core-php
-          token: ${{ secrets.CORE_PHP_TOKEN }}
-          path: _core-php
-      - run: mv _core-php ../takt-core-php
 
       - uses: shivammathur/setup-php@v2
         with:
