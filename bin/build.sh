@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Builds a distributable, dependency-scoped plugin ZIP under dist/.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+SLUG="takt-analytics"
+BUILD="$ROOT/build"
+DIST="$ROOT/dist"
+SCOPER="$ROOT/bin/php-scoper.phar"
+SCOPER_URL="https://github.com/humbug/php-scoper/releases/latest/download/php-scoper.phar"
+
+rm -rf "$BUILD" "$DIST"
+mkdir -p "$DIST"
+
+echo "==> Staging WordPress symbol excludes for php-scoper"
+composer install --no-interaction --quiet
+mkdir -p "$ROOT/.scoper-excludes"
+cp vendor/sniccowp/php-scoper-wordpress-excludes/generated/*.json "$ROOT/.scoper-excludes/"
+
+echo "==> Installing production dependencies"
+composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+if [ ! -f "$SCOPER" ]; then
+  echo "==> Downloading php-scoper"
+  curl -fsSL "$SCOPER_URL" -o "$SCOPER"
+fi
+
+echo "==> Scoping dependencies into build/ (prefix Takt\\WP\\Vendor)"
+php "$SCOPER" add-prefix --output-dir="$BUILD" --force --no-interaction --quiet
+
+echo "==> Regenerating the scoped autoloader"
+# php-scoper patches installed.json with the prefixed namespaces but leaves
+# Composer's own autoload_real.php inconsistent; a fresh dump rebuilds the
+# internals against the already-prefixed package maps.
+cp composer.json "$BUILD/composer.json"
+composer dump-autoload --working-dir="$BUILD" --classmap-authoritative --no-dev --no-interaction
+
+echo "==> Smoke-testing the scoped autoloader"
+BUILD="$BUILD" php -r '
+require getenv("BUILD")."/vendor/autoload.php";
+$checks = [
+    "scoped core-php"  => class_exists("Takt\\WP\\Vendor\\Vskstudio\\Takt\\Takt"),
+    "scoped psr7"      => class_exists("Takt\\WP\\Vendor\\Nyholm\\Psr7\\Factory\\Psr17Factory"),
+    "plugin namespace" => class_exists("Vskstudio\\Takt\\WordPress\\Plugin"),
+    "bundled tracker"  => is_readable(getenv("BUILD")."/vendor/vskstudio/takt-core-php/resources/takt.auto.js"),
+];
+$ok = true;
+foreach ($checks as $name => $pass) {
+    fwrite(STDERR, sprintf("    [%s] %s\n", $pass ? "ok" : "FAIL", $name));
+    $ok = $ok && $pass;
+}
+exit($ok ? 0 : 1);
+'
+
+echo "==> Packaging dist/$SLUG.zip"
+STAGE="$(mktemp -d)"
+mkdir -p "$STAGE/$SLUG"
+cp -R "$BUILD/." "$STAGE/$SLUG/"
+rm -rf "$STAGE/$SLUG/tests" "$STAGE/$SLUG"/.php-cs-fixer* "$STAGE/$SLUG"/phpstan.neon \
+       "$STAGE/$SLUG"/phpunit.xml* "$STAGE/$SLUG"/scoper.inc.php "$STAGE/$SLUG"/composer.* 2>/dev/null || true
+( cd "$STAGE" && zip -rqX "$DIST/$SLUG.zip" "$SLUG" )
+rm -rf "$STAGE"
+
+echo "==> Restoring dev dependencies"
+composer install --no-interaction --quiet
+
+echo "Built $DIST/$SLUG.zip"
