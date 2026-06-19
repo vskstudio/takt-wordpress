@@ -14,8 +14,9 @@ Privacy-first analytics for WordPress: injects the Takt snippet and reports WooC
 
 Takt Analytics connects your WordPress site to Takt, privacy-first web analytics.
 
-* Injects the Takt browser snippet into every page (inline, CDN or self-hosted asset).
+* Injects the Takt browser snippet into every page (inline, CDN, self-hosted asset or ES-module SDK).
 * Autocapture for outbound links, file downloads, tagged events and 404s.
+* Advanced controls: sampling rate, query-string handling with a param allowlist, Do-Not-Track override and a tracking kill-switch.
 * Sends WooCommerce orders as server-to-server purchase events with revenue, so sales are tracked even when an order completes off-session (payment callback, admin, cron).
 * Uses WordPress' own HTTP API for server-to-server requests — no bundled HTTP libraries.
 * All dependencies are namespace-isolated, so the plugin never conflicts with other plugins.

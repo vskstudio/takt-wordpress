@@ -36,11 +36,16 @@ The release ZIP is self-contained: it bundles `takt-core-php` and its PSR-7 depe
 | Setting | Description |
 | --- | --- |
 | Domain | The site identifier sent with every event (e.g. `example.com`). |
-| Mode | `inline` (snippet embedded), `cdn` or `asset` (self-hosted). |
+| Mode | `inline` (snippet embedded), `cdn`, `asset` (self-hosted) or `sdk` (ES-module, needed for URL scrubbing). |
 | Outbound / Downloads / Tagged / 404 | Autocapture toggles for the browser tracker. |
 | Exclude localhost | Skip tracking on local hostnames (on for production). |
 | File extensions | Which extensions count as downloads. |
 | Script origin | Base URL for `cdn`/`asset` modes. |
+| Sampling rate | Keep a fraction of hits, e.g. `0.5` for ~50%. Empty tracks everything. |
+| Keep query string | Keep the raw query string + hash in tracked URLs (off strips them). |
+| Kept query params | Allowlist of params to keep when *Keep query string* is off (e.g. `utm_source, utm_medium`). |
+| Ignore Do-Not-Track | Stop honoring the browser Do-Not-Track header. |
+| Pause tracking | Kill-switch: disable tracking entirely without removing the plugin. |
 | WooCommerce | Send purchase events on order completion. |
 | Trigger status | Order status that fires the purchase (`completed` or `processing`). |
 | API endpoint | Your Takt ingest endpoint (server-to-server). |
@@ -52,6 +57,14 @@ For environments where secrets must not live in the database, define the key as 
 
 ```php
 define('TAKT_API_KEY', 'your-key');
+```
+
+### URL scrubbing via `wp-config.php`
+
+`scrubUrl` is a raw JavaScript function injected verbatim into the page, so it is **dev-controlled only** — it lives in a constant, never in the database or the admin UI, and only takes effect in `sdk` mode:
+
+```php
+define('TAKT_SCRUB_URL', '(u) => u.split("#")[0]');
 ```
 
 ### Privacy
