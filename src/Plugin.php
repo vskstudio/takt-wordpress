@@ -20,8 +20,14 @@ final class Plugin
 
     public static function boot(): void
     {
-        $plugin = new self(Settings::sanitize((array) \get_option(self::OPTION, [])));
-        $plugin->register();
+        $settings = Settings::sanitize((array) \get_option(self::OPTION, []));
+        // The API key may live in wp-config.php (TAKT_API_KEY) instead of the DB,
+        // so the secret never sits in an autoloaded option.
+        if (\defined('TAKT_API_KEY')) {
+            $settings['api_key'] = (string) \constant('TAKT_API_KEY');
+        }
+
+        (new self($settings))->register();
     }
 
     public function register(): void
