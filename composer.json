@@ -1,0 +1,59 @@
+{
+  "name": "vskstudio/takt-wordpress",
+  "description": "WordPress plugin for Takt analytics: injects the privacy-first browser snippet + sends WooCommerce purchases as server-to-server events.",
+  "type": "wordpress-plugin",
+  "license": "MIT",
+  "keywords": [
+    "analytics",
+    "takt",
+    "wordpress",
+    "woocommerce",
+    "privacy",
+    "tracking",
+    "snippet"
+  ],
+  "homepage": "https://github.com/vskstudio/takt-wordpress",
+  "authors": [
+    {
+      "name": "vskstudio"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/vskstudio/takt-wordpress/issues",
+    "source": "https://github.com/vskstudio/takt-wordpress"
+  },
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../takt-core-php"
+    }
+  ],
+  "require": {
+    "php": ">=8.1",
+    "vskstudio/takt-core-php": "*",
+    "nyholm/psr7": "^1.8"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.5",
+    "phpstan/phpstan": "^1.11",
+    "friendsofphp/php-cs-fixer": "^3.59",
+    "brain/monkey": "^2.6"
+  },
+  "autoload": {
+    "psr-4": {
+      "Vskstudio\\Takt\\WordPress\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Vskstudio\\Takt\\WordPress\\Tests\\": "tests/"
+    }
+  },
+  "config": {
+    "allow-plugins": {
+      "php-http/discovery": true
+    }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}
