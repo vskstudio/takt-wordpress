@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Vskstudio\Takt\WordPress\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Vskstudio\Takt\Mode;
 use Vskstudio\Takt\WordPress\Settings;
 
 final class SettingsTest extends TestCase
@@ -21,5 +22,104 @@ final class SettingsTest extends TestCase
         $out = Settings::sanitize(['domain' => 'evil.com"></script><script>alert(1)</script>']);
 
         $this->assertSame('', $out['domain']);
+    }
+
+    public function test_sanitize_whitelists_the_mode_and_defaults_to_inline(): void
+    {
+        $this->assertSame('cdn', Settings::sanitize(['mode' => 'cdn'])['mode']);
+        $this->assertSame('asset', Settings::sanitize(['mode' => 'asset'])['mode']);
+        $this->assertSame('inline', Settings::sanitize(['mode' => 'nonsense'])['mode']);
+        $this->assertSame('inline', Settings::sanitize([])['mode']);
+    }
+
+    public function test_sanitize_casts_boolean_flags(): void
+    {
+        $on = Settings::sanitize([
+            'outbound' => '1',
+            'files' => 'on',
+            'not_found' => '1',
+            'tagged' => '1',
+            'exclude_localhost' => '1',
+        ]);
+        $this->assertTrue($on['outbound']);
+        $this->assertTrue($on['files']);
+        $this->assertTrue($on['not_found']);
+        $this->assertTrue($on['tagged']);
+        $this->assertTrue($on['exclude_localhost']);
+
+        $off = Settings::sanitize([]);
+        $this->assertFalse($off['outbound']);
+        $this->assertFalse($off['files']);
+        $this->assertFalse($off['not_found']);
+        $this->assertFalse($off['tagged']);
+        $this->assertFalse($off['exclude_localhost']);
+    }
+
+    public function test_sanitize_normalizes_file_extensions_csv_to_a_list(): void
+    {
+        $out = Settings::sanitize(['file_extensions' => 'PDF, zip , .docx,,']);
+
+        $this->assertSame(['pdf', 'zip', 'docx'], $out['file_extensions']);
+        $this->assertSame([], Settings::sanitize([])['file_extensions']);
+    }
+
+    public function test_sanitize_handles_woocommerce_fields(): void
+    {
+        $out = Settings::sanitize([
+            'woocommerce' => '1',
+            'wc_trigger_status' => 'processing',
+            'api_key' => '  secret-key  ',
+        ]);
+        $this->assertTrue($out['woocommerce']);
+        $this->assertSame('processing', $out['wc_trigger_status']);
+        $this->assertSame('secret-key', $out['api_key']);
+
+        $def = Settings::sanitize(['wc_trigger_status' => 'garbage']);
+        $this->assertFalse($def['woocommerce']);
+        $this->assertSame('completed', $def['wc_trigger_status']);
+        $this->assertSame('', $def['api_key']);
+    }
+
+    public function test_sanitize_validates_url_fields(): void
+    {
+        $out = Settings::sanitize([
+            'api_endpoint' => 'https://takt.example.com/',
+            'script_origin' => 'https://cdn.example.com',
+        ]);
+        $this->assertSame('https://takt.example.com', $out['api_endpoint']);
+        $this->assertSame('https://cdn.example.com', $out['script_origin']);
+
+        $bad = Settings::sanitize([
+            'api_endpoint' => 'javascript:alert(1)',
+            'script_origin' => 'not a url',
+        ]);
+        $this->assertSame('', $bad['api_endpoint']);
+        $this->assertSame('', $bad['script_origin']);
+    }
+
+    public function test_to_options_maps_settings_to_core_options(): void
+    {
+        $opts = Settings::toOptions([
+            'domain' => 'example.com',
+            'mode' => 'cdn',
+            'outbound' => true,
+            'files' => true,
+            'not_found' => true,
+            'tagged' => true,
+            'exclude_localhost' => false,
+            'file_extensions' => ['pdf', 'zip'],
+            'script_origin' => 'https://cdn.example.com',
+        ], 'nonce-123');
+
+        $this->assertSame('example.com', $opts->domain);
+        $this->assertSame(Mode::Cdn, $opts->mode);
+        $this->assertTrue($opts->outbound);
+        $this->assertTrue($opts->files);
+        $this->assertTrue($opts->notFound);
+        $this->assertTrue($opts->tagged);
+        $this->assertFalse($opts->excludeLocalhost);
+        $this->assertSame(['pdf', 'zip'], $opts->fileExtensions);
+        $this->assertSame('https://cdn.example.com', $opts->scriptOrigin);
+        $this->assertSame('nonce-123', $opts->nonce);
     }
 }
