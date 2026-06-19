@@ -32,6 +32,10 @@ final class Plugin
 
     public function register(): void
     {
+        if (\is_admin()) {
+            (new AdminPage())->register();
+        }
+
         \add_action('wp_head', [$this, 'injectSnippet']);
 
         $takt = TaktClientFactory::fromSettings($this->settings);
