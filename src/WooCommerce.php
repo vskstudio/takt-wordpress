@@ -35,6 +35,13 @@ final class WooCommerce
             return;
         }
 
+        // Claim the order before sending, not after: the status hook can re-enter
+        // (status processing→completed, plugins re-saving, a double admin click),
+        // and marking first means a Purchase is counted at most once even if the
+        // ingest call itself is retried by a later status change.
+        $order->update_meta_data(self::META_KEY, '1');
+        $order->save();
+
         $revenue = new Revenue(
             number_format((float) $order->get_total(), 2, '.', ''),
             strtoupper($order->get_currency()),
@@ -49,8 +56,5 @@ final class WooCommerce
                 'order_id' => (string) $order->get_id(),
                 'items' => (string) $order->get_item_count(),
             ], $revenue);
-
-        $order->update_meta_data(self::META_KEY, '1');
-        $order->save();
     }
 }

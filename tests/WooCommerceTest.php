@@ -138,6 +138,18 @@ final class WooCommerceTest extends TestCase
         $this->assertSame('Mozilla/5.0 (buyer)', $client->lastRequest->getHeaderLine('User-Agent'));
     }
 
+    public function test_send_purchase_marks_the_order_before_sending(): void
+    {
+        $client = new CapturingClient();
+        $order = $this->order();
+        (new WooCommerce($this->takt($client), 'completed'))->sendPurchase($order);
+
+        // Claimed (marked + saved) so a re-entrant status hook counts it once.
+        $this->assertSame('1', $order->get_meta('_takt_tracked'));
+        $this->assertTrue($order->saved);
+        $this->assertSame(1, $client->calls);
+    }
+
     public function test_on_status_changed_only_fires_on_the_trigger_status(): void
     {
         $client = new CapturingClient();
