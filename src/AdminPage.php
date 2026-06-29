@@ -98,7 +98,7 @@ final class AdminPage
             'completed' => 'Terminée',
             'processing' => 'En traitement',
         ]);
-        $this->textRow('api_endpoint', "Endpoint d'ingestion", $s['api_endpoint'], 'https://takt.exemple.com');
+        $this->textRow('api_endpoint', "Endpoint d'ingestion", $s['api_endpoint'], 'https://taktlytics.com');
         $this->apiKeyRow($hasKey, $keyLocked);
 
         echo '</table>';

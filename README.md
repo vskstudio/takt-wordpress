@@ -19,7 +19,7 @@ The official WordPress plugin for [Takt](https://github.com/vskstudio/takt-wordp
 
 1. Download `takt-analytics.zip` from the [latest release](https://github.com/vskstudio/takt-wordpress/releases).
 2. In **WP Admin → Plugins → Add New → Upload Plugin**, upload the ZIP and activate it.
-3. Open **Settings → Takt Analytics** and configure your domain and endpoint.
+3. Open **Settings → Takt Analytics** and configure your domain and endpoint. For the hosted service, set the API endpoint to `https://taktlytics.com`.
 
 Or via WP-CLI:
 
@@ -48,7 +48,7 @@ The release ZIP is self-contained: it bundles `takt-core-php` and its PSR-7 depe
 | Pause tracking | Kill-switch: disable tracking entirely without removing the plugin. |
 | WooCommerce | Send purchase events on order completion. |
 | Trigger status | Order status that fires the purchase (`completed` or `processing`). |
-| API endpoint | Your Takt ingest endpoint (server-to-server). |
+| API endpoint | Your Takt ingest endpoint (server-to-server). Use the hosted Takt origin `https://taktlytics.com` unless you run a self-hosted instance. |
 | API key | Bearer token for server-to-server events (write-only field). |
 
 ### API key via `wp-config.php`
