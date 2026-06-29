@@ -1,6 +1,6 @@
 # Takt Analytics for WordPress
 
-## Unreleased
+## 0.2.0
 
 ### Hardening
 
