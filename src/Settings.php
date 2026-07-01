@@ -142,7 +142,7 @@ final class Settings
         $out = [];
         foreach (explode(',', $raw) as $part) {
             $path = trim($part);
-            if ($path !== '' && preg_match('#^/[A-Za-z0-9_\-/]*$#', $path)) {
+            if ($path !== '' && preg_match('#^/[A-Za-z0-9_\-/]*\z#', $path)) {
                 $out[] = $path;
             }
         }
