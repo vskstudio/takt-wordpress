@@ -1,5 +1,10 @@
 # Takt Analytics for WordPress
 
+## 0.3.1
+
+- Harden the **Excluded paths** sanitizer: anchor the path pattern with `\z`
+  so a trailing newline can no longer slip through.
+
 ## 0.3.0
 
 - New **Excluded paths** setting: a comma-separated list of path prefixes
