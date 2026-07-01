@@ -50,6 +50,13 @@ final class SettingsTest extends TestCase
         $this->assertSame([], Settings::sanitize([])['query_params']);
     }
 
+    public function test_sanitize_parses_exclude_paths(): void
+    {
+        $out = Settings::sanitize(['exclude' => '/app, /account/settings , not-a-path,bad path,/a_b-c/,,']);
+        $this->assertSame(['/app', '/account/settings', '/a_b-c/'], $out['exclude']);
+        $this->assertSame([], Settings::sanitize([])['exclude']);
+    }
+
     public function test_sanitize_casts_advanced_boolean_flags(): void
     {
         $on = Settings::sanitize(['track_query' => '1', 'ignore_dnt' => '1', 'disable_tracking' => '1']);
@@ -194,5 +201,16 @@ final class SettingsTest extends TestCase
         // Outside sdk mode the JS function is dropped (core-php would otherwise throw).
         $cdn = Settings::toOptions(['domain' => 'example.com', 'mode' => 'cdn', 'scrub_url' => '(u)=>u']);
         $this->assertNull($cdn->scrubUrl);
+    }
+
+    public function test_to_options_passes_exclude_only_in_sdk_mode(): void
+    {
+        $sdk = Settings::toOptions(['domain' => 'example.com', 'mode' => 'sdk', 'exclude' => ['/app', '/account']]);
+        $this->assertSame(['/app', '/account'], $sdk->exclude);
+        $this->assertSame(Mode::Sdk, $sdk->mode);
+
+        // Outside sdk mode the path list is dropped (core-php would otherwise throw).
+        $cdn = Settings::toOptions(['domain' => 'example.com', 'mode' => 'cdn', 'exclude' => ['/app']]);
+        $this->assertSame([], $cdn->exclude);
     }
 }

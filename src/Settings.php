@@ -33,6 +33,7 @@ final class Settings
             'sample_rate' => self::sanitizeRate($raw['sample_rate'] ?? ''),
             'track_query' => !empty($raw['track_query']),
             'query_params' => self::parseParams($raw['query_params'] ?? ''),
+            'exclude' => self::parsePaths($raw['exclude'] ?? ''),
             'ignore_dnt' => !empty($raw['ignore_dnt']),
             'disable_tracking' => !empty($raw['disable_tracking']),
             'woocommerce' => !empty($raw['woocommerce']),
@@ -60,8 +61,12 @@ final class Settings
         // avoid fataling every page.
         $scrubRaw = is_string($s['scrub_url'] ?? null) ? trim($s['scrub_url']) : '';
         $scrubUrl = ($mode === 'sdk' && $scrubRaw !== '') ? $scrubRaw : null;
+        // exclude is a path-prefix allowlist that, like scrubUrl, is only valid
+        // in sdk mode — core-php throws if it is set otherwise. Drop it outside
+        // sdk (or when empty) so the admin can't fatal every page.
+        $exclude = is_array($s['exclude'] ?? null) ? $s['exclude'] : [];
 
-        return Options::fromArray([
+        $args = [
             'domain' => $s['domain'] ?? '',
             'mode' => $mode,
             'outbound' => $s['outbound'] ?? false,
@@ -78,7 +83,13 @@ final class Settings
             'respectDnt' => !empty($s['ignore_dnt']) ? false : null,
             'enabled' => !empty($s['disable_tracking']) ? false : null,
             'scrubUrl' => $scrubUrl,
-        ]);
+        ];
+
+        if ($mode === 'sdk' && $exclude !== []) {
+            $args['exclude'] = $exclude;
+        }
+
+        return Options::fromArray($args);
     }
 
     /** A sampling rate in (0, 1] — else null (track everything). */
@@ -109,6 +120,30 @@ final class Settings
             $name = trim($part);
             if ($name !== '' && preg_match('/^[A-Za-z0-9_-]+$/', $name)) {
                 $out[] = $name;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * "/app, /account , foo,," → ["/app", "/account"]: a comma-separated list of
+     * path prefixes never tracked. Only path-shaped entries survive — each must
+     * start with "/" and contain only [A-Za-z0-9_-] and slashes (no markup,
+     * spaces or query strings). Consumed as the sdk-only `exclude` option.
+     *
+     * @return list<string>
+     */
+    private static function parsePaths(mixed $raw): array
+    {
+        if (!is_string($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach (explode(',', $raw) as $part) {
+            $path = trim($part);
+            if ($path !== '' && preg_match('#^/[A-Za-z0-9_\-/]*$#', $path)) {
+                $out[] = $path;
             }
         }
 

@@ -1,5 +1,14 @@
 # Takt Analytics for WordPress
 
+## 0.3.0
+
+- New **Excluded paths** setting: a comma-separated list of path prefixes
+  (e.g. `/app, /account`) that the browser tracker never records. This is a
+  privacy control backed by the tracker's `exclude` option and is therefore
+  **SDK-mode only** — it is silently dropped in the inline / CDN / asset modes,
+  where `takt-core-php` would otherwise throw.
+- Require `vskstudio/takt-core-php` `^0.5.0`, which adds the `exclude` option.
+
 ## 0.2.0
 
 ### Hardening

@@ -44,6 +44,7 @@ The release ZIP is self-contained: it bundles `takt-core-php` and its PSR-7 depe
 | Sampling rate | Keep a fraction of hits, e.g. `0.5` for ~50%. Empty tracks everything. |
 | Keep query string | Keep the raw query string + hash in tracked URLs (off strips them). |
 | Kept query params | Allowlist of params to keep when *Keep query string* is off (e.g. `utm_source, utm_medium`). |
+| Excluded paths | Path prefixes never tracked (e.g. `/app, /account`). SDK mode only — ignored in other modes. |
 | Ignore Do-Not-Track | Stop honoring the browser Do-Not-Track header. |
 | Pause tracking | Kill-switch: disable tracking entirely without removing the plugin. |
 | WooCommerce | Send purchase events on order completion. |

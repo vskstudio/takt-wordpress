@@ -90,6 +90,7 @@ final class AdminPage
         $this->textRow('sample_rate', 'Taux d\'échantillonnage', $rate, '0.5');
         $this->checkboxRow('track_query', 'Conserver la query string', $s['track_query']);
         $this->textRow('query_params', 'Paramètres de requête conservés', implode(', ', $s['query_params']), 'utm_source, utm_medium');
+        $this->textRow('exclude', 'Chemins exclus du suivi (mode SDK)', implode(', ', $s['exclude']), '/app, /account');
         $this->checkboxRow('ignore_dnt', 'Ignorer Do-Not-Track', $s['ignore_dnt']);
         $this->checkboxRow('disable_tracking', 'Suspendre le suivi', $s['disable_tracking']);
 
