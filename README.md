@@ -2,6 +2,7 @@
 
 
 > 📚 **Documentation** — [taktlytics.com/docs/wrappers/wordpress](https://taktlytics.com/docs/wrappers/wordpress)
+
 The official WordPress plugin for [Takt](https://github.com/vskstudio/takt-wordpress), privacy-first web analytics. It injects the Takt browser snippet into your site and — when WooCommerce is active — reports completed orders as server-to-server purchase events with revenue.
 
 - **Snippet injection** into `wp_head` (inline, CDN, self-hosted asset or ES-module SDK).
