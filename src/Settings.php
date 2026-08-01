@@ -8,6 +8,9 @@ use Vskstudio\Takt\Options;
 
 final class Settings
 {
+    /** Chemin de collecte que core-php ajoute lui-même à l'origine d'ingestion. */
+    private const INGEST_PATH = '/api/event';
+
     /**
      * @param array<string,mixed> $raw
      * @return array<string,mixed>
@@ -41,7 +44,7 @@ final class Settings
                 ? $raw['wc_trigger_status']
                 : 'completed',
             'api_key' => is_string($raw['api_key'] ?? null) ? trim($raw['api_key']) : '',
-            'api_endpoint' => self::sanitizeUrl($raw['api_endpoint'] ?? ''),
+            'api_endpoint' => self::sanitizeIngestOrigin($raw['api_endpoint'] ?? ''),
         ];
     }
 
@@ -148,6 +151,25 @@ final class Settings
         }
 
         return $out;
+    }
+
+    /**
+     * L'origine d'ingestion serveur-à-serveur : core-php lui ajoute
+     * « /api/event » à chaque envoi. Le réglage accepte donc les deux formes —
+     * l'origine (https://taktlytics.com) et l'URL de collecte complète
+     * (https://taktlytics.com/api/event, la forme documentée côté snippet), qui
+     * est repliée sur son origine. Sans ce repli, l'envoi partait vers
+     * « /api/event/api/event » et échouait en silence. Les réglages déjà
+     * enregistrés sont des origines : ils traversent la normalisation inchangés.
+     */
+    private static function sanitizeIngestOrigin(mixed $raw): string
+    {
+        $url = self::sanitizeUrl($raw);
+        if ($url === '' || !str_ends_with(strtolower($url), self::INGEST_PATH)) {
+            return $url;
+        }
+
+        return rtrim(substr($url, 0, -strlen(self::INGEST_PATH)), '/');
     }
 
     /** A http(s) URL with a host, trailing slash dropped — else ''. */

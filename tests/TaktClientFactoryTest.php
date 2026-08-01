@@ -6,6 +6,7 @@ namespace Vskstudio\Takt\WordPress\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Vskstudio\Takt\Takt;
+use Vskstudio\Takt\WordPress\Settings;
 use Vskstudio\Takt\WordPress\TaktClientFactory;
 use Vskstudio\Takt\WordPress\Tests\Support\CapturingClient;
 
@@ -43,5 +44,20 @@ final class TaktClientFactoryTest extends TestCase
         $this->assertSame('https://takt.example.com/api/event', (string) $client->lastRequest->getUri());
         $this->assertSame('Bearer secret', $client->lastRequest->getHeaderLine('Authorization'));
         $this->assertSame('shop.example.com', $client->lastPayload()['d']);
+    }
+
+    public function test_a_full_collect_url_posts_to_a_single_api_event_path(): void
+    {
+        $client = new CapturingClient();
+        $takt = TaktClientFactory::fromSettings(Settings::sanitize([
+            'api_endpoint' => 'https://taktlytics.com/api/event',
+            'domain' => 'shop.example.com',
+            'api_key' => 'secret',
+        ]), $client);
+
+        $this->assertInstanceOf(Takt::class, $takt);
+        $takt->event('Ping');
+
+        $this->assertSame('https://taktlytics.com/api/event', (string) $client->lastRequest->getUri());
     }
 }
