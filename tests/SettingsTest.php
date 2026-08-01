@@ -135,6 +135,41 @@ final class SettingsTest extends TestCase
         $this->assertSame('', $bad['script_origin']);
     }
 
+    public function test_sanitize_folds_a_full_collect_url_back_to_its_ingest_origin(): void
+    {
+        // core-php appends "/api/event" itself: the documented collect URL must
+        // not end up posting to "/api/event/api/event".
+        $hosted = Settings::sanitize(['api_endpoint' => 'https://taktlytics.com/api/event']);
+        $this->assertSame('https://taktlytics.com', $hosted['api_endpoint']);
+
+        $slash = Settings::sanitize(['api_endpoint' => 'https://taktlytics.com/api/event/']);
+        $this->assertSame('https://taktlytics.com', $slash['api_endpoint']);
+
+        $upper = Settings::sanitize(['api_endpoint' => 'https://taktlytics.com/API/Event']);
+        $this->assertSame('https://taktlytics.com', $upper['api_endpoint']);
+
+        $proxy = Settings::sanitize(['api_endpoint' => 'https://analytics.example.com/t/api/event']);
+        $this->assertSame('https://analytics.example.com/t', $proxy['api_endpoint']);
+    }
+
+    public function test_sanitize_leaves_an_ingest_origin_untouched(): void
+    {
+        // Backward compatibility: every already-stored setting is an origin.
+        $this->assertSame(
+            'https://taktlytics.com',
+            Settings::sanitize(['api_endpoint' => 'https://taktlytics.com'])['api_endpoint'],
+        );
+        $this->assertSame(
+            'https://analytics.example.com/ingest',
+            Settings::sanitize(['api_endpoint' => 'https://analytics.example.com/ingest'])['api_endpoint'],
+        );
+        // "/api/event" only folds when it is the trailing path, not a substring.
+        $this->assertSame(
+            'https://takt.example.com/api/events',
+            Settings::sanitize(['api_endpoint' => 'https://takt.example.com/api/events'])['api_endpoint'],
+        );
+    }
+
     public function test_to_options_maps_settings_to_core_options(): void
     {
         $opts = Settings::toOptions([

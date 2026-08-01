@@ -1,12 +1,13 @@
 # Takt Analytics for WordPress
 
-
 > 📚 **Documentation** — [taktlytics.com/docs/wrappers/wordpress](https://taktlytics.com/docs/wrappers/wordpress)
 
-The official WordPress plugin for [Takt](https://github.com/vskstudio/takt-wordpress), privacy-first web analytics. It injects the Takt browser snippet into your site and — when WooCommerce is active — reports completed orders as server-to-server purchase events with revenue.
+The official WordPress plugin for [Takt](https://taktlytics.com), privacy-first web analytics. It injects the Takt browser snippet into your site and — when WooCommerce is active — reports completed orders as server-to-server purchase events with revenue.
 
-- **Snippet injection** into `wp_head` (inline, CDN, self-hosted asset or ES-module SDK).
-- **Autocapture** for outbound links, file downloads, tagged events and 404s.
+Takt itself is a managed service hosted in Europe; the plugin connects your site to it. Only the measurement script can be served from your own domain (the `asset` mode below).
+
+- **Snippet injection** into `wp_head` (inline, CDN, asset served from your own origin, or ES-module SDK).
+- **Autocapture** for outbound links, file downloads, tagged events (`data-takt-event`) and 404s.
 - **WooCommerce purchases** sent server-to-server, so revenue is tracked even when an order completes off-session (IPN, admin, cron).
 - **No bundled HTTP stack** — server-to-server requests go through WordPress' own `wp_remote_post`.
 - **Dependency-isolated** — all Composer dependencies are namespaced under `Takt\WP\Vendor\`, so the plugin never clashes with another plugin's PSR-7/HTTP libraries.
@@ -16,13 +17,13 @@ The official WordPress plugin for [Takt](https://github.com/vskstudio/takt-wordp
 - WordPress 6.0+
 - PHP 8.1+
 - WooCommerce (optional, for purchase tracking)
-- A Takt endpoint and API key
+- A Takt account: a site domain, and — for purchase tracking — an API key
 
 ## Installation
 
 1. Download `takt-analytics.zip` from the [latest release](https://github.com/vskstudio/takt-wordpress/releases).
 2. In **WP Admin → Plugins → Add New → Upload Plugin**, upload the ZIP and activate it.
-3. Open **Settings → Takt Analytics** and configure your domain and endpoint. For the hosted service, set the API endpoint to `https://taktlytics.com`.
+3. Open **Settings → Takt Analytics** and set your domain. That alone is enough for the browser snippet: it posts to `https://taktlytics.com/api/event` by default. To also report WooCommerce purchases, fill in the ingest origin (`https://taktlytics.com`) and your API key.
 
 Or via WP-CLI:
 
@@ -34,26 +35,38 @@ The release ZIP is self-contained: it bundles `takt-core-php` and its PSR-7 depe
 
 ## Configuration
 
-**Settings → Takt Analytics**
+**Settings → Takt Analytics** — 19 settings, all stored in the single `takt_settings` option. Defaults below are what a fresh, never-saved install uses.
 
-| Setting | Description |
-| --- | --- |
-| Domain | The site identifier sent with every event (e.g. `example.com`). |
-| Mode | `inline` (snippet embedded), `cdn`, `asset` (self-hosted) or `sdk` (ES-module, needed for URL scrubbing). |
-| Outbound / Downloads / Tagged / 404 | Autocapture toggles for the browser tracker. |
-| Exclude localhost | Skip tracking on local hostnames (on for production). |
-| File extensions | Which extensions count as downloads. |
-| Script origin | Base URL for `cdn`/`asset` modes. |
-| Sampling rate | Keep a fraction of hits, e.g. `0.5` for ~50%. Empty tracks everything. |
-| Keep query string | Keep the raw query string + hash in tracked URLs (off strips them). |
-| Kept query params | Allowlist of params to keep when *Keep query string* is off (e.g. `utm_source, utm_medium`). |
-| Excluded paths | Path prefixes never tracked (e.g. `/app, /account`). SDK mode only — ignored in other modes. |
-| Ignore Do-Not-Track | Stop honoring the browser Do-Not-Track header. |
-| Pause tracking | Kill-switch: disable tracking entirely without removing the plugin. |
-| WooCommerce | Send purchase events on order completion. |
-| Trigger status | Order status that fires the purchase (`completed` or `processing`). |
-| API endpoint | Your Takt ingest endpoint (server-to-server). Use the hosted Takt origin `https://taktlytics.com` unless you run a self-hosted instance. |
-| API key | Bearer token for server-to-server events (write-only field). |
+| Setting | Default | Description |
+| --- | --- | --- |
+| Domain | *(empty)* | The site identifier sent with every event (e.g. `example.com`). While empty, no snippet is injected at all. |
+| Mode | `inline` | `inline` (tracker embedded in the page, anti-adblock), `cdn` (jsDelivr), `asset` (served from your own origin) or `sdk` (ES module — required by *Excluded paths* and URL scrubbing). |
+| Script origin | *(empty)* | Base URL the tracker is served from in `cdn`/`asset` mode. |
+| Exclude localhost | off | Skip tracking on local hostnames (`localhost`, `*.local`, private ranges). **Off by default**: turn it on if your production domain is also used locally. |
+| Outbound clicks | off | Autocapture: sends `Outbound Link: Click` for links to another hostname. |
+| Downloads | off | Autocapture: sends `File Download` for links ending in a tracked extension. |
+| Tagged events | off | Autocapture: sends a custom event on click for any element carrying `data-takt-event="Name"`. Extra properties come from `data-takt-prop-*` attributes on the same element. |
+| 404 pages | off | Autocapture: sends `404` when the page is marked `[data-takt-404]` / `<meta name="takt:404">` or the navigation responded 404. |
+| File extensions | *(tracker's own list)* | Overrides which extensions count as downloads (e.g. `pdf, zip, docx`). |
+| Sampling rate | *(empty)* | Keep a fraction of hits, e.g. `0.5` for ~50%. Empty tracks everything. |
+| Keep query string | off | Keep the raw query string + hash in tracked URLs. Off strips them. |
+| Kept query params | *(empty)* | Allowlist of params kept when *Keep query string* is off (e.g. `utm_source, utm_medium`). |
+| Excluded paths | *(empty)* | Path prefixes never tracked (e.g. `/app, /account`). SDK mode only — silently dropped in the other modes. |
+| Ignore Do-Not-Track | off | Stop honoring the browser Do-Not-Track header (honored by default). |
+| Pause tracking | off | Kill-switch: disable tracking entirely without removing the plugin. |
+| WooCommerce | off | Send purchase events with revenue. Also needs the ingest origin and the API key. |
+| Trigger status | `completed` | Order status that fires the purchase (`completed` or `processing`). |
+| Ingest origin | *(empty)* | Origin of the Takt service for server-to-server events: `https://taktlytics.com`, or your first-party proxy origin. See below. |
+| API key | *(empty)* | Bearer token for server-to-server events. Write-only field: it is never echoed back, and submitting it blank keeps the stored value. |
+
+### Ingest origin vs. collect URL
+
+Two different things share the word "endpoint" across Takt, so the plugin is explicit about which one it wants:
+
+- The **browser snippet** posts to a full **collect URL**. It is not configurable here and defaults to `https://taktlytics.com/api/event`. Setting a *Script origin* makes the tracker derive `{script origin}/api/event` instead, which is how a first-party proxy is used.
+- The **Ingest origin** setting is server-to-server only, and is an **origin**: `/api/event` is appended to it on every send.
+
+Pasting the full collect URL into the *Ingest origin* field is the obvious mistake, so it is accepted: a trailing `/api/event` is folded back to its origin when the settings are saved and read. Both forms therefore post to exactly one `/api/event`, and origins already stored keep working unchanged.
 
 ### API key via `wp-config.php`
 
@@ -73,7 +86,7 @@ define('TAKT_SCRUB_URL', '(u) => u.split("#")[0]');
 
 ### Privacy
 
-WooCommerce purchase events are sent from your server to your Takt endpoint and include the customer's IP address and user agent for attribution. They are forwarded, never logged by the plugin. The browser tracker honours `Do Not Track` and a `takt_ignore` localStorage opt-out.
+WooCommerce purchase events are sent from your server to the configured Takt ingest origin and include the customer's IP address and user agent for attribution. They are forwarded, never logged by the plugin. The browser tracker honours `Do Not Track` (unless *Ignore Do-Not-Track* is on) and a `takt_ignore` localStorage opt-out.
 
 ## Development
 

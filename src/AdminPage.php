@@ -99,7 +99,14 @@ final class AdminPage
             'completed' => 'Terminée',
             'processing' => 'En traitement',
         ]);
-        $this->textRow('api_endpoint', "Endpoint d'ingestion", $s['api_endpoint'], 'https://taktlytics.com');
+        $this->textRow(
+            'api_endpoint',
+            "Origine d'ingestion",
+            $s['api_endpoint'],
+            'https://taktlytics.com',
+            'Origine du service Takt, sans le chemin de collecte. « /api/event » est ajouté automatiquement, '
+                . "et l'URL de collecte complète est acceptée puis repliée sur son origine.",
+        );
         $this->apiKeyRow($hasKey, $keyLocked);
 
         echo '</table>';
@@ -112,16 +119,22 @@ final class AdminPage
         return Plugin::OPTION . '[' . $key . ']';
     }
 
-    private function textRow(string $key, string $label, string $value, string $placeholder): void
-    {
+    private function textRow(
+        string $key,
+        string $label,
+        string $value,
+        string $placeholder,
+        string $description = '',
+    ): void {
         printf(
             '<tr><th scope="row"><label for="takt_%1$s">%2$s</label></th><td>'
-                . '<input type="text" id="takt_%1$s" name="%3$s" value="%4$s" placeholder="%5$s" class="regular-text" /></td></tr>',
+                . '<input type="text" id="takt_%1$s" name="%3$s" value="%4$s" placeholder="%5$s" class="regular-text" />%6$s</td></tr>',
             \esc_attr($key),
             \esc_html($label),
             \esc_attr($this->field($key)),
             \esc_attr($value),
             \esc_attr($placeholder),
+            $description === '' ? '' : '<p class="description">' . \esc_html($description) . '</p>',
         );
     }
 
