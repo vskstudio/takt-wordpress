@@ -12,22 +12,22 @@ Privacy-first analytics for WordPress: injects the Takt snippet and reports WooC
 
 == Description ==
 
-Takt Analytics connects your WordPress site to Takt, privacy-first web analytics.
+Takt Analytics connects your WordPress site to Takt, privacy-first web analytics. Takt is a managed service hosted in Europe; only the measurement script can be served from your own domain.
 
-* Injects the Takt browser snippet into every page (inline, CDN, self-hosted asset or ES-module SDK).
-* Autocapture for outbound links, file downloads, tagged events and 404s.
+* Injects the Takt browser snippet into every page (inline, CDN, asset served from your own origin, or ES-module SDK).
+* Autocapture for outbound links, file downloads, tagged events (elements carrying data-takt-event) and 404s.
 * Advanced controls: sampling rate, query-string handling with a param allowlist, Do-Not-Track override and a tracking kill-switch.
 * Sends WooCommerce orders as server-to-server purchase events with revenue, so sales are tracked even when an order completes off-session (payment callback, admin, cron).
 * Uses WordPress' own HTTP API for server-to-server requests — no bundled HTTP libraries.
 * All dependencies are namespace-isolated, so the plugin never conflicts with other plugins.
 
-A Takt endpoint and API key are required.
+A Takt account is required. The browser snippet only needs your site domain; purchase tracking also needs the ingest origin and an API key.
 
 == Installation ==
 
 1. Upload the plugin ZIP via Plugins → Add New → Upload Plugin, or extract it into wp-content/plugins/.
 2. Activate the plugin.
-3. Go to Settings → Takt Analytics and enter your domain, endpoint and API key.
+3. Go to Settings → Takt Analytics and enter your domain. For WooCommerce purchase tracking, also enter the ingest origin (https://taktlytics.com) and your API key.
 
 For server-to-server purchase tracking, keep WooCommerce active and choose the order status that should fire the event.
 
@@ -43,7 +43,11 @@ No. WooCommerce is only required for purchase (revenue) tracking. The browser sn
 
 = Is customer data shared? =
 
-Purchase events are sent from your server to your own Takt endpoint and include the customer's IP and user agent for attribution. They are never logged by the plugin. The browser tracker honours Do Not Track.
+Purchase events are sent from your server to the configured Takt ingest origin and include the customer's IP and user agent for attribution. They are never logged by the plugin. The browser tracker honours Do Not Track unless you turn that off.
+
+= What goes in the "Ingest origin" field? =
+
+The origin of the Takt service — https://taktlytics.com — without a path: the plugin appends /api/event itself. If you paste the full collect URL (https://taktlytics.com/api/event), it is folded back to its origin when saved, so both forms work.
 
 = Where is my API key stored? =
 
@@ -51,10 +55,28 @@ In the WordPress options table, or in a wp-config.php constant (TAKT_API_KEY) wh
 
 == Changelog ==
 
+= 0.3.2 =
+* Fix: the ingest origin setting now accepts the full collect URL (https://taktlytics.com/api/event) as well as the origin. It used to be sent verbatim to a client that appends /api/event, so purchases silently posted to /api/event/api/event and were lost.
+* The settings field is renamed "Ingest origin" and documents both accepted forms. Existing settings are unaffected.
+* Docs: corrected the settings reference (19 settings, real defaults), the tagged-events selector (data-takt-event) and the description of Takt as a managed service.
+
+= 0.3.1 =
+* Harden the Excluded paths sanitizer so a trailing newline can no longer slip through.
+
+= 0.3.0 =
+* New Excluded paths setting: path prefixes the browser tracker never records (SDK mode only).
+
+= 0.2.0 =
+* WooCommerce orders are claimed before the Purchase event is sent, so a re-entrant status hook counts a purchase at most once.
+* Server-to-server header sanitization and revenue amount validation from takt-core-php.
+
 = 0.1.0 =
 * Initial release: snippet injection and WooCommerce server-to-server purchase events.
 
 == Upgrade Notice ==
+
+= 0.3.2 =
+Fixes WooCommerce purchases silently failing when the ingest setting held the full collect URL. Check Settings → Takt Analytics if purchases never arrived.
 
 = 0.1.0 =
 Initial release.
