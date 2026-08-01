@@ -1,5 +1,25 @@
 # Takt Analytics for WordPress
 
+## 0.3.2
+
+- **Ingest origin**: the server-to-server setting is an *origin* — `takt-core-php`
+  appends `/api/event` on every send — but nothing stopped an admin from pasting
+  the full collect URL, which is the form documented everywhere on the snippet
+  side (`https://taktlytics.com/api/event`). The request then went to
+  `/api/event/api/event` and failed silently; since the order is claimed before
+  the send, the purchase was lost for good. Both forms are now accepted: a
+  trailing `/api/event` is folded back to its origin. Settings already stored are
+  origins and go through unchanged.
+- The settings field is renamed **Origine d'ingestion** and spells out which of
+  the two URLs it expects.
+- Docs: the settings reference now lists the 19 settings with their real
+  defaults (**Exclure localhost** is off on a fresh install, not on), names the
+  actual tagged-events selector (`[data-takt-event]`, with `data-takt-prop-*`
+  properties), separates the ingest origin from the snippet's collect URL, and
+  no longer suggests Takt can be self-hosted — it is a managed service hosted in
+  Europe, and only the measurement script can be served from your own domain.
+  `readme.txt` also regains the changelog entries it was missing since 0.1.0.
+
 ## 0.3.1
 
 - Harden the **Excluded paths** sanitizer: anchor the path pattern with `\z`
